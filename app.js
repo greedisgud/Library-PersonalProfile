@@ -8,15 +8,7 @@ class Book {
 
 class UI {
   static displayBooks() {
-    const storedBooks = [
-      {
-        title: "J",
-        author: "Jack",
-        isbn: "3321",
-      },
-    ];
-
-    const books = storedBooks;
+    const books = Store.getBooks();
 
     books.forEach((book) => UI.addBookToList(book));
   }
@@ -48,6 +40,40 @@ class UI {
   }
 }
 
+class Store {
+  static getBooks() {
+    let books;
+
+    if (localStorage.getItem("books") === null) {
+      books = [];
+    } else {
+      books = JSON.parse(localStorage.getItem("books"));
+    }
+
+    return books;
+  }
+
+  static addBook(book) {
+    const books = Store.getBooks();
+
+    books.push(book);
+
+    localStorage.setItem("books", JSON.stringify(books));
+  }
+
+  static removeBook(isbn) {
+    const books = Store.getBooks();
+
+    books.forEach((book, index) => {
+      if (book.isbn === isbn) {
+        books.splice(index, 1);
+      }
+    });
+
+    localStorage.setItem("books", JSON.stringify(books));
+  }
+}
+
 document.addEventListener("DOMContentLoaded", UI.displayBooks);
 
 document.getElementById("book-form").addEventListener("submit", (e) => {
@@ -56,13 +82,21 @@ document.getElementById("book-form").addEventListener("submit", (e) => {
   const author = document.getElementById("author").value;
   const isbn = document.getElementById("isbn").value;
 
-  const book = new Book(title, author, isbn);
+  if (title === "" || author === "" || isbn === "") {
+    alert("Complete all fields!");
+  } else {
+    const book = new Book(title, author, isbn);
 
-  UI.addBookToList(book);
+    UI.addBookToList(book);
 
-  UI.clearFields();
+    Store.addBook(book);
+
+    UI.clearFields();
+  }
 });
 
 document.getElementById("book-list").addEventListener("click", (e) => {
   UI.deleteBook(e.target);
+
+  Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
 });
